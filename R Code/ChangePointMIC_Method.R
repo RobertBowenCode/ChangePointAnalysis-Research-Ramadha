@@ -30,3 +30,8 @@ findChangesExponentialMIC <- function(seq){
 }
 
 
+findChangesNormalMIC <- function(seq){
+  #write code for the MIC method whens used for exponential parametric case
+}
+
+
