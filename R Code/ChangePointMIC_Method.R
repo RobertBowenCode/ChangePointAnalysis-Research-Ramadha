@@ -39,3 +39,4 @@ findChangesExponentialMIC <- function(seq, nom_alpha){
   #Sn = MIC(n) − min( 1≤k<n MIC(k)) + dim(θ) log n
   #Sn follows a chi square distribution with d degrees of freedom where d is the dimension of theta(why is this three here again? shouldn't it be 1, but then it doesn't work strange)
 }
+

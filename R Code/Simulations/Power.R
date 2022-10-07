@@ -1,0 +1,1 @@
+#This is the code for the Power Simulations for the Various methods. 
