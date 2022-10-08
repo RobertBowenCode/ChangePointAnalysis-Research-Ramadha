@@ -1,14 +1,6 @@
-# testing and locating changes in variance of a process with independent data using the MIC method with JackKnife Likelyhood  
-#
-#
-#
-#Author Robert Bowen 10/6/22
-#
-#MIC Change Point Method for parametric Exponential Distribution
-# 
-# 
 
 
+##################Method of Hypothesis test ####################################
 
 
 
@@ -32,7 +24,7 @@ findChangesExponentialMICJackKnife <- function(seq, nom_alpha){ # This should be
     
     n = length(jackknife_seq)
     mu = mean(jackknife_seq)
-  
+    
     for(i in 2:(n-2)){ #calculate the MIC model at each changepoint i for a removed value of j
       
       
@@ -44,7 +36,7 @@ findChangesExponentialMICJackKnife <- function(seq, nom_alpha){ # This should be
       
       MICJa[i]= -2*(i*log(lambda1) -lambda1*sum(jackknife_seq[1:i]) +(n-i)*log(lambda2)  -lambda2*sum(jackknife_seq[r:n]) ) + 2*log(n) + ((2*i/n-1)^2)*log(n) 
     }           #log likelyhood -2*(L(theta1,theta2,k))                             +         #complexity(ˆθ1k,ˆθ2k, k) = 2dim(ˆθ1k) + (2k/ n − 1)^2 (log(n)), where dim(ˆθ1k) is one
-      
+    
     MICJ_probs_alt[j] = min(MICJa, na.rm = TRUE) #store the min for this removed value of k
   }
   
@@ -71,14 +63,99 @@ findChangesExponentialMICJackKnife <- function(seq, nom_alpha){ # This should be
 }
 
 
-#testing out simulations for type one error to see how well it performs 
-n=700
-repetition =200
-count = NULL
-for(i in 1:repetition){
-  x=rexp(n,1)
-  count[i] = findChangesExponentialMICJackKnife(x, 0.05)
+
+
+
+
+
+
+
+
+
+
+
+##############################################################################
+
+
+#ChangePoint Simulation with Exp(1) on MIC JackKnife Method
+#simulating to calc empirical type 1 error at various sample sizes and nominal values of alpha
+
+#repetitions =500
+# testing at nominal alphas = 0.01, 0.05, 0.1
+
+###Variables###
+exp_mean = 1
+
+#Store the results
+simulations_n_50  = c()
+simulations_n_100 = c()
+simulations_n_150 = c()
+simulations_n_200 = c()
+
+
+
+sample_sizes = c(50,100,150,200)
+nominal_type_1_error = c(0.01, 0.05, 0.1)
+repetitions = 500
+
+
+for (sizes in sample_sizes) #for each sample size
+{
+  
+  array_index = 1
+  
+  
+  for(type_1 in nominal_type_1_error) #calculate the empirical type 1 error at nominal values of 0.01, 0.05, and 0.1
+  {
+
+    
+    empirical_type_1 = 0
+    count = 0
+    
+    for(i in 1:repetitions)
+    {
+      seq <-rexp(sizes, exp_mean) #simulate an exponential dataset with no changes
+      count = count + findChangesExponentialMICJackKnife(seq, type_1) #run test on dataset to check for change
+    }
+    
+    empirical_type_1 = count/repetitions
+    
+    
+    #store the results
+    if(sizes == 50)
+    {
+      simulations_n_50[array_index] = empirical_type_1
+    }
+    else if(sizes == 100)
+    {
+      simulations_n_100[array_index] = empirical_type_1
+    }
+    else if (sizes == 150)
+    {
+      simulations_n_150[array_index] = empirical_type_1
+    }
+    else if (sizes == 200)
+    {
+      simulations_n_200[array_index] = empirical_type_1
+      
+    }
+    
+    array_index = array_index+1
+    
+  }
+  
   
 }
 
-mean(count)
+
+
+
+
+
+
+
+
+
+
+
+
