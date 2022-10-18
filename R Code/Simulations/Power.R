@@ -97,7 +97,8 @@ alpha=0.05                    #nominal type 1 error
 location_set =seq(0,1,by=0.1) # the location of the split in dataset
 size_set=c(25,50,75,100)      # the total sample sizes. 
 power_index = 1
-
+count = c()
+sample_set = 1
 power_list  = c()
 
 for(sample_size in size_set ){ ##for each sample size
@@ -111,7 +112,7 @@ for(sample_size in size_set ){ ##for each sample size
     firstSamplen=floor(change_location*sample_size)
     secondSamplen=sample_size-firstSamplen
     
-    repetition=50 #number of repetitions
+    repetition=50000 #number of repetitions
     
     
     for(i in 1:repetition){ #create the simulations
@@ -128,14 +129,15 @@ for(sample_size in size_set ){ ##for each sample size
   }
   
   
-  power_list[power_index] = power
+  power_list = c(power_list,power)
   power_index = power_index + 1; 
   
   
-  if(k!=1){par(new=TRUE)}
-  plot(q,power,type='l',ylim=c(0,1),xlab="Changepoint Location",main=c("Sample 1: Exp(1)",
+  if(sample_set!=1){par(new=TRUE)}
+  plot(location_set,power,type='l',ylim=c(0,1),xlab="Changepoint Location",main=c("Sample 1: Exp(1)",
                                                                        "Sample 2: Exp(3)",
-                                                                       "alpha=0.05"),col=k)
+                                                                        "alpha=0.05"),col=sample_set)
+  sample_set = sample_set + 1; 
 }
 
 abline(h=0)
