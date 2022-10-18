@@ -102,18 +102,16 @@ power_list  = c()
 
 for(sample_size in size_set ){ ##for each sample size
   
-  
   power=NULL
   
   for(change_location in location_set){ #for each different location of change point
     
     
     #get samples lengths, at chosen change point split
-    firstSamplen=floor(location_set[change_location]*sample_size)
+    firstSamplen=floor(change_location*sample_size)
     secondSamplen=sample_size-firstSamplen
     
-    
-    repetition=50000 #number of repetitions
+    repetition=50 #number of repetitions
     
     
     for(i in 1:repetition){ #create the simulations
@@ -121,11 +119,11 @@ for(sample_size in size_set ){ ##for each sample size
       #do the hypothesis test
       first_sample=rexp(firstSamplen,1)
       second_sample=rexp(secondSamplen,3)
-      seq =c(first_sample,second_sample)
-      count[i] = findChangesExponentialMICJackKnife(seq, alpha)
+      dataset =c(first_sample,second_sample)
+      count[i] = findChangesExponentialMICJackKnife(dataset, alpha)
       
     }
-    print(q[j])
+
     power=c(power,mean(count))
   }
   
@@ -140,85 +138,5 @@ for(sample_size in size_set ){ ##for each sample size
                                                                        "alpha=0.05"),col=k)
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#Power simulations for MIC method. 
-
-MICa = NULL
-count = c()
-# Function to estimate single change location with significance level alpha
-
-##this is the method
-findChangeLR <- function(seq){
-  n = length(seq)
-  for(i in 2:(n-2)){
-    lambda1=i/sum(x[1:i])
-    r=i+1
-    lambda2=(n-i)/sum(x[r:n])
-    MICa[i]= -2*(i*log(lambda1)   -lambda1*sum(x[1:i])   +(n-i)*log(lambda2)   -lambda2*sum(x[r:n]))   +((2*i/n-1)^2)*log(n)
-  }
-  return(min(MICa, na.rm = TRUE))
-}
-
-alpha=0.05
-q=seq(0,1,by=0.1)
-n=c(25,50,75,100)
-
-#power is the probability of rejecting the null hypothesis given that its false. 
-
-for(k in 1:4){ ##for each sample size
-  power=NULL
-  
-  for(j in 1:length(q)){ #for each different location of change point
-    
-    
-    #get samples lengths, this is 
-    firstSamplen=floor(q[j]*n[k])
-    secondSamplen=n[k]-firstSamplen
-    
-    
-    repetition=50000 #number of repitions
-    
-    
-    for(i in 1:repetition){ #create the simulations
-      #do the hypothesis test
-      z=rexp(firstSamplen,1)
-      y=rexp(secondSamplen,3)
-      x=c(z,y)
-      mu = mean(x)
-      lambda=(n[k])/sum(x)
-      MICo = -2*(n[k]*log(lambda)-lambda*sum(x))
-      MICk = findChangeLR(x)
-      count[i] = ifelse(MICo - MICk>qchisq(1-alpha,3), 1, 0)
-      
-    }
-    print(q[j])
-    power=c(power,mean(count))
-  }
-  if(k!=1){par(new=TRUE)}
-  plot(q,power,type='l',ylim=c(0,1),xlab="Changepoint Location",main=c("Sample 1: Exp(1)",
-                                                                       "Sample 2: Exp(3)",
-                                                                       "alpha=0.05"),col=k)
-}
 abline(h=0)
 abline(h=alpha,lty=2)
