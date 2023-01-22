@@ -74,6 +74,8 @@ findChangesExponentialMICJackKnife <- function(seq, nom_alpha){ # This should be
 
 
 
+
+
 ##############################################################################
 
 
@@ -261,6 +263,118 @@ for (sizes in sample_sizes) #for each sample size
   
   
 }
+
+
+
+
+
+###########################################################################################################
+
+#MIC Change Point Method for parametric Normal distrubtion Distribution with likelyhood applied
+
+findChangesNormalMIC <- function(seq, nom_alpha)
+{
+  #seq is the sequence that is being determined to have a change point or not
+  #nom_alpha is the nominal alpha that we would like to use in our hypothesis test
+  
+  #variables
+  MICa = NULL
+  n = length(seq)
+  
+  
+  for(i in 2:(n-2)){ #calculate the MIC model at each changepoint i
+    
+    r=i+1
+    MICa[i]= ((n/2)+i*log(var(seq[1:i]))+(n-i)*log(var(seq[r:n]))+n/2)+(2+((2*i)/n-1)^2)*log(n)
+    
+  }
+  
+  MIC_null <- -2*log(2*pi)+n*log(var(seq))+n+log(n)
+  MIC_alt <- (min(MICa, na.rm = TRUE))
+  
+  return(ifelse(MIC_null - MIC_alt +log(n)>qchisq(1-nom_alpha,1),1,0))
+}
+
+
+
+
+
+#ChangePoint Simulation with Norm(0,1) on MIC  Method
+#simulating to calc empirical type 1 error at various sample sizes and nominal values of alpha
+
+#repetitions =500
+# testing at nominal alphas = 0.01, 0.05, 0.1
+
+###Variables###
+norm_mean = 0
+norm_variance = 0
+
+#Store the results
+simulations_n_50  = c()
+simulations_n_100 = c()
+simulations_n_150 = c()
+simulations_n_200 = c()
+
+
+
+sample_sizes = c(50,100,150,200)
+nominal_type_1_error = c(0.01, 0.05, 0.1)
+repetitions = 500
+
+
+for (sizes in sample_sizes) #for each sample size
+{
+  
+  array_index = 1
+  
+  
+  for(type_1 in nominal_type_1_error) #calculate the empirical type 1 error at nominal values of 0.01, 0.05, and 0.1
+  {
+    
+    
+    empirical_type_1 = 0
+    count = 0
+    
+    for(i in 1:repetitions)
+    {
+      seq <- rnorm( sizes, 0, 1 ) #simulate an exponential dataset with no changes
+      count = count + findChangesNormalMIC(seq, type_1) #run test on dataset to check for change
+    }
+    
+    empirical_type_1 = count/repetitions
+    
+    
+    #store the results
+    if(sizes == 50)
+    {
+      simulations_n_50[array_index] = empirical_type_1
+    }
+    else if(sizes == 100)
+    {
+      simulations_n_100[array_index] = empirical_type_1
+    }
+    else if (sizes == 150)
+    {
+      simulations_n_150[array_index] = empirical_type_1
+    }
+    else if (sizes == 200)
+    {
+      simulations_n_200[array_index] = empirical_type_1
+      
+    }
+    
+    array_index = array_index+1
+    
+  }
+  
+  
+}
+
+
+#results are about 0.1 , 0.2, 0.3 for each sample size. It should be approx 0.01, 0.05, 0.1
+
+
+
 
 
 
