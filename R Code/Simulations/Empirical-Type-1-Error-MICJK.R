@@ -285,14 +285,18 @@ findChangesNormalMIC <- function(seq, nom_alpha)
   for(i in 2:(n-2)){ #calculate the MIC model at each changepoint i
     
     r=i+1
-    MICa[i]= ((n/2)+i*log(var(seq[1:i]))+(n-i)*log(var(seq[r:n]))+n/2)+(2+((2*i)/n-1)^2)*log(n)
+    MICa[i]= (n)*log(2*pi) + i*log(var(seq[1:i]))  +  (n-i)*log(var(seq[r:n]))  + (n) +(3+((2*i)/n-1)^2)*log(n)
     
   }
   
-  MIC_null <- -2*log(2*pi)+n*log(var(seq))+n+log(n)
+  
+  MIC_null <- n*log(2*pi) + n *log(var(seq)) + n + 2*log(n)
+  #MIC_null <- -2*log(2*pi)+n*log(var(seq))+n+    2*log(n)
+  #MIC NULL = -2 Ln(theta, theta, n) + dim(theta)*log(n)
+  
   MIC_alt <- (min(MICa, na.rm = TRUE))
   
-  return(ifelse(MIC_null - MIC_alt +log(n)>qchisq(1-nom_alpha,1),1,0))
+  return(ifelse(MIC_null - MIC_alt >qchisq(1-nom_alpha,2),1,0))
 }
 
 
