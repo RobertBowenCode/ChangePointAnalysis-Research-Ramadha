@@ -243,3 +243,217 @@ for(sample_size in size_set ){ ##for each sample size
 abline(h=0)
 abline(h=alpha,lty=2)
 
+
+#######################################################################################################
+
+
+##Power calculations for Normal MIC method
+findChangesNormalMIC <- function(seq, nom_alpha)
+{
+  #seq is the sequence that is being determined to have a change point or not
+  #nom_alpha is the nominal alpha that we would like to use in our hypothesis test
+  
+  #variables
+  MICa = NULL
+  n = length(seq)
+  
+  
+  for(i in 2:(n-2)){ #calculate the MIC model at each changepoint i
+    
+    r=i+1
+    MICa[i]= (n)*log(2*pi) + i*log(var(seq[1:i]))  +  (n-i)*log(var(seq[r:n]))  + (n) +(3+((2*i)/n-1)^2)*log(n)
+    
+  }
+  
+  
+  MIC_null <- n*log(2*pi) + n *log(var(seq)) + n + 2*log(n)
+  MIC_alt <- (min(MICa, na.rm = TRUE))
+  
+  return(ifelse(MIC_null - MIC_alt >qchisq(1-nom_alpha,2),1,0))
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+alpha=0.05                    #nominal type 1 error
+location_set =seq(0,1,by=0.1) # the location of the split in dataset
+size_set=c(25,50,75,100)      # the total sample sizes. 
+power_index = 1
+count = c()
+sample_set = 1
+power_list  = c()
+
+for(sample_size in size_set ){ ##for each sample size
+  
+  power=NULL
+  
+  for(change_location in location_set){ #for each different location of change point
+    
+    
+    #get samples lengths, at chosen change point split
+    firstSamplen=floor(change_location*sample_size)
+    secondSamplen=sample_size-firstSamplen
+    
+    repetition=50000 #number of repetitions
+    
+    
+    for(i in 1:repetition){ #create the simulations
+      
+      #do the hypothesis test
+      first_sample=rnorm(firstSamplen,0,1)
+      second_sample=rnorm(secondSamplen,0,3)
+      dataset =c(first_sample,second_sample)
+      count[i] = findChangesNormalMIC(dataset, alpha)
+      
+    }
+    
+    power=c(power,mean(count))
+  }
+  
+  
+  power_list = c(power_list,power)
+  power_index = power_index + 1; 
+  
+  
+  if(sample_set!=1){par(new=TRUE)}
+  plot(location_set,power,type='l',ylim=c(0,1),xlab="Changepoint Location",main=c("Sample 1: Norm(0,1)",
+                                                                                  "Sample 2: Norm(0,3)",
+                                                                                  "alpha=0.05"),col=sample_set)
+  sample_set = sample_set + 1; 
+}
+
+abline(h=0)
+abline(h=alpha,lty=2)
+
+
+
+
+#####################################################################################################
+
+#Power Test for for Normal MIC JackKnife
+
+findChangesNormalMICJackKnife <- function(seq, nom_alpha){
+  
+  
+  
+  
+  #seq is the sequence that is being determined to have a change point or not
+  #nom_alpha is the nominal alpha that we would like to use in our hypothesis test
+  
+  #variables
+  MICJa = NULL
+  MICJ_probs_alt = NULL
+  MICJ_probs_null = NULL
+  
+  for(j in 1:length(seq)) #apply the JackKnife Method to the alternative likeylhood
+  {
+    
+    jackknife_seq = seq[-c(j)] #remove one value
+    
+    n = length(jackknife_seq)
+    
+    
+    for(i in 2:(n-2)){ #calculate the MIC model at each changepoint i for a removed value of j
+      
+      r=i+1
+      MICJa[i]= (n)*log(2*pi) + i*log(var(jackknife_seq[1:i]))  +  (n-i)*log(var(jackknife_seq[r:n]))  + (n) +(3+((2*i)/n-1)^2)*log(n)
+    }          
+    
+    MICJ_probs_alt[j] = min(MICJa, na.rm = TRUE) #store the min for this removed value of k
+  }
+  
+  
+  for(j in 1:length(seq)) #apply the JackKnife Method to the null log likelyhood
+  {
+    jackknife_seq = seq[-c(j)] #remove one value
+    
+    n = length(jackknife_seq)
+    
+    MICJ_probs_null[j] = n*log(2*pi) + n *log(var(jackknife_seq)) + n + 2*log(n)
+    
+    
+  }
+  
+  
+  MIC_alt <-(mean(MICJ_probs_alt)) #take the average of the minimized models for Jackknife
+  MIC_null <- mean(MICJ_probs_null)  #take the jacknife model for the null hypothesis
+  
+  
+  return(ifelse(MIC_null - MIC_alt >qchisq(1 - nom_alpha,2), 1, 0))
+  
+}
+
+
+
+
+
+
+alpha=0.05                    #nominal type 1 error
+location_set =seq(0,1,by=0.1) # the location of the split in dataset
+size_set=c(25,50,75,100)      # the total sample sizes. 
+power_index = 1
+count = c()
+sample_set = 1
+power_list  = c()
+
+for(sample_size in size_set ){ ##for each sample size
+  
+  power=NULL
+  
+  for(change_location in location_set){ #for each different location of change point
+    
+    
+    #get samples lengths, at chosen change point split
+    firstSamplen=floor(change_location*sample_size)
+    secondSamplen=sample_size-firstSamplen
+    
+    repetition=50000 #number of repetitions
+    
+    
+    for(i in 1:repetition){ #create the simulations
+      
+      #do the hypothesis test
+      first_sample=rnorm(firstSamplen,0,1)
+      second_sample=rnorm(secondSamplen,0,3)
+      dataset =c(first_sample,second_sample)
+      count[i] = findChangesExponentialMICJackKnife(dataset, alpha)
+      
+    }
+    
+    power=c(power,mean(count))
+  }
+  
+  
+  power_list = c(power_list,power)
+  power_index = power_index + 1; 
+  
+  
+  if(sample_set!=1){par(new=TRUE)}
+  plot(location_set,power,type='l',ylim=c(0,1),xlab="Changepoint Location",main=c("Sample 1: Norm(0,1)",
+                                                                                  "Sample 2: Norm(0,3)",
+                                                                                  "alpha=0.05"),col=sample_set)
+  sample_set = sample_set + 1; 
+}
+
+abline(h=0)
+abline(h=alpha,lty=2)
+
+
+
+
+
+
+
+
