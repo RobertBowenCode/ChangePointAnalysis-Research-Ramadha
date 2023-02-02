@@ -57,7 +57,7 @@ findChangesExponentialMICJackKnife <- function(seq, nom_alpha){ # This should be
     mu = mean(jackknife_seq)
     lambda_n = 1/mu
     
-    MICJ_probs_null[j] = -2*(n*log(lambda_n) - (lambda_n)*sum(seq[1:n])) + log(n)*1
+    MICJ_probs_null[j] = -2*(n*log(lambda_n) - (lambda_n)*sum(jackknife_seq[1:n])) + log(n)*1
   }
   
   
@@ -71,6 +71,66 @@ findChangesExponentialMICJackKnife <- function(seq, nom_alpha){ # This should be
 }
 
 
+
+
+findChangesNormalMICJackKnife <- function(seq, nom_alpha){
+ 
+  
+  
+  
+  #seq is the sequence that is being determined to have a change point or not
+  #nom_alpha is the nominal alpha that we would like to use in our hypothesis test
+  
+  #variables
+  MICJa = NULL
+  MICJ_probs_alt = NULL
+  MICJ_probs_null = NULL
+  
+  for(j in 1:length(seq)) #apply the JackKnife Method to the alternative likeylhood
+  {
+    
+    jackknife_seq = seq[-c(j)] #remove one value
+    
+    n = length(jackknife_seq)
+
+    
+    for(i in 2:(n-2)){ #calculate the MIC model at each changepoint i for a removed value of j
+      
+      r=i+1
+      MICJa[i]= (n)*log(2*pi) + i*log(var(jackknife_seq[1:i]))  +  (n-i)*log(var(jackknife_seq[r:n]))  + (n) +(3+((2*i)/n-1)^2)*log(n)
+    }          
+    
+    MICJ_probs_alt[j] = min(MICJa, na.rm = TRUE) #store the min for this removed value of k
+  }
+  
+  
+  for(j in 1:length(seq)) #apply the JackKnife Method to the null log likelyhood
+  {
+    jackknife_seq = seq[-c(j)] #remove one value
+    
+    n = length(jackknife_seq)
+    
+    MICJ_probs_null[j] = n*log(2*pi) + n *log(var(jackknife_seq)) + n + 2*log(n)
+  
+   
+  }
+  
+  
+  MIC_alt <-(mean(MICJ_probs_alt)) #take the average of the minimized models for Jackknife
+  MIC_null <- mean(MICJ_probs_null)  #take the jacknife model for the null hypothesis
+  
+  
+  return(ifelse(MIC_null - MIC_alt >qchisq(1 - nom_alpha,2), 1, 0))
+
+}
+  
+
+
+
+
+
+
+
 #testing out simulations for type one error to see how well it performs 
 n=700
 repetition =200
@@ -82,3 +142,20 @@ for(i in 1:repetition){
 }
 
 mean(count)
+
+
+
+
+#testing for JK Normal MIC method
+
+n=700
+repetition =200
+count = NULL
+for(i in 1:repetition){
+  x=rexp(n,1)
+  count[i] = findChangesNormalMICJackKnife(x, 0.05)
+  
+}
+
+mean(count)
+
